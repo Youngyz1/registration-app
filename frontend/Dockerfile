@@ -6,21 +6,18 @@ ARG REACT_APP_API_URL
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
 ENV NODE_OPTIONS=--max-old-space-size=4096
 
-# Copy package files first
 COPY package*.json ./
 COPY .npmrc ./
 COPY craco.config.js ./
 
-# Install dependencies
 RUN npm install --legacy-peer-deps
 
-# Force correct ajv versions to fix craco/webpack compatibility
-RUN npm install ajv@^8.0.0 ajv-keywords@^5.0.0 --legacy-peer-deps
+# Fix ajv version conflicts
+RUN npm install ajv@^8.0.0 ajv-keywords@^5.0.0 --legacy-peer-deps && \
+    npm install --prefix node_modules/fork-ts-checker-webpack-plugin ajv@6.12.6 ajv-keywords@3.5.2 --legacy-peer-deps
 
-# Copy rest of source code
 COPY . .
 
-# Build the app
 RUN npx craco build
 
 # ---------- Production Stage ----------
