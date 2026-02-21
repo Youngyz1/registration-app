@@ -15,6 +15,7 @@ COPY craco.config.js ./
 RUN npm install --legacy-peer-deps
 
 # Fix ajv version conflict
+ARG CACHE_BUST=2
 RUN npm install ajv@^8.0.0 ajv-keywords@^5.0.0 --legacy-peer-deps
 
 # Copy rest of source code
