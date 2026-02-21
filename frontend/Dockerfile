@@ -7,10 +7,10 @@ ENV REACT_APP_API_URL=$REACT_APP_API_URL
 ENV NODE_OPTIONS=--max-old-space-size=4096
 ENV CI=false
 ENV DISABLE_ESLINT_PLUGIN=true
+ENV SKIP_PREFLIGHT_CHECK=true
 
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
-RUN npm install ajv@^8.0.0 ajv-keywords@^5.0.0 --legacy-peer-deps
 COPY . .
 RUN npm run build
 
