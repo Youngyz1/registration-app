@@ -10,6 +10,7 @@ ENV DISABLE_ESLINT_PLUGIN=true
 
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
+RUN npm install ajv@^8.0.0 ajv-keywords@^5.0.0 --legacy-peer-deps
 COPY . .
 RUN npm run build
 
