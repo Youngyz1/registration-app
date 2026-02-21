@@ -6,22 +6,21 @@ ARG REACT_APP_API_URL
 ENV REACT_APP_API_URL=$REACT_APP_API_URL
 ENV NODE_OPTIONS=--max-old-space-size=4096
 
-# Copy package files first
 COPY package*.json ./
 COPY .npmrc ./
 COPY craco.config.js ./
 
-# Install dependencies
 RUN npm install --legacy-peer-deps
 
 # Fix ajv version conflict
-ARG CACHE_BUST=2
 RUN npm install ajv@^8.0.0 ajv-keywords@^5.0.0 --legacy-peer-deps
 
-# Copy rest of source code
+# Patch the broken formatLimit file that causes 'date' TypeError
+RUN sed -i 's/var format = formats\[name\]/var format = formats \&\& formats[name]/' \
+    node_modules/fork-ts-checker-webpack-plugin/node_modules/ajv-keywords/keywords/_formatLimit.js 2>/dev/null || true
+
 COPY . .
 
-# Build the app
 RUN npx craco build
 
 # ---------- Production Stage ----------
