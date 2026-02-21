@@ -6,5 +6,13 @@ module.exports = {
       ["@babel/plugin-proposal-private-methods", { loose: true }],
       ["@babel/plugin-proposal-private-property-in-object", { loose: true }]
     ]
+  },
+  webpack: {
+    configure: (webpackConfig) => {
+      webpackConfig.plugins = webpackConfig.plugins.filter(
+        (plugin) => plugin.constructor.name !== 'ForkTsCheckerWebpackPlugin'
+      );
+      return webpackConfig;
+    }
   }
 };
