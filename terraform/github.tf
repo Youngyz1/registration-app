@@ -1,4 +1,7 @@
-# In a new file: terraform/github.tf
+provider "github" {
+  token = var.github_token
+  owner = "Youngyz1"
+}
 
 resource "github_actions_secret" "ec2_host" {
   repository      = "registration-app"
