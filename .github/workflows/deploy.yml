@@ -196,17 +196,45 @@ jobs:
 
             mkdir -p ~/app
 
+            # ── Install Docker if not present ──────────────
+            if ! command -v docker &> /dev/null; then
+              echo "Installing Docker..."
+              sudo yum update -y
+              sudo yum install -y docker
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker ec2-user
+            fi
+
+            # ── Install Docker Compose if not present ──────
+            if ! sudo docker compose version &> /dev/null; then
+              echo "Installing Docker Compose..."
+              sudo mkdir -p /usr/local/lib/docker/cli-plugins
+              sudo curl -SL https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64 \
+                -o /usr/local/lib/docker/cli-plugins/docker-compose
+              sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+            fi
+
+            # ── Install AWS CLI if not present ─────────────
+            if ! command -v aws &> /dev/null; then
+              echo "Installing AWS CLI..."
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              sudo ./aws/install
+              rm -rf awscliv2.zip aws/
+            fi
+
             PUBLIC_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)
 
             export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
             export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
             export AWS_DEFAULT_REGION="${{ env.AWS_REGION }}"
 
-            # Login to ECR
+            # ── Login to ECR ───────────────────────────────
             aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
-              docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+              sudo docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
 
-            # Update .env with all secrets and current IP
+            # ── Update .env ────────────────────────────────
             cat > ~/app/.env <<EOF
             DATABASE_URL=postgresql://${{ secrets.DB_USERNAME }}:${{ secrets.DB_PASSWORD }}@${{ secrets.DB_HOST }}:5432/${{ secrets.DB_NAME }}
             DB_HOST=${{ secrets.DB_HOST }}
@@ -221,14 +249,12 @@ jobs:
             ECR_FRONTEND=${{ env.ECR_FRONTEND }}
             EOF
 
-            # Pull latest images from ECR
-            docker compose -f ~/app/docker-compose.prod.yml --env-file ~/app/.env pull
+            # ── Pull and restart containers ────────────────
+            sudo docker compose -f ~/app/docker-compose.prod.yml --env-file ~/app/.env pull
+            sudo docker compose -f ~/app/docker-compose.prod.yml --env-file ~/app/.env up -d
 
-            # Restart with new images
-            docker compose -f ~/app/docker-compose.prod.yml --env-file ~/app/.env up -d
-
-            # Clean up
-            docker image prune -f
+            # ── Clean up old images ────────────────────────
+            sudo docker image prune -f
 
             echo "✅ Deployment complete!"
             echo "🌐 App live at: http://$PUBLIC_IP"
