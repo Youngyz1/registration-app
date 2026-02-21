@@ -14,6 +14,9 @@ COPY craco.config.js ./
 # Install dependencies
 RUN npm install --legacy-peer-deps
 
+# Force correct ajv versions to fix craco/webpack compatibility
+RUN npm install ajv@^8.0.0 ajv-keywords@^5.0.0 --legacy-peer-deps
+
 # Copy rest of source code
 COPY . .
 
