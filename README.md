@@ -380,3 +380,49 @@ For support and questions, please open an issue in the repository or contact the
 
 
 lets get it done and run the code
+
+
+
+# Create S3 bucket
+aws s3api create-bucket \
+  --bucket youngyz-registration-app-958421185668 \
+  --region us-east-1
+
+# Enable versioning
+aws s3api put-bucket-versioning \
+  --bucket youngyz-registration-app-958421185668 \
+  --versioning-configuration Status=Enabled
+
+# Create DynamoDB lock table
+aws dynamodb create-table \
+  --table-name registration-app-terraform-locks \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST \
+  --region us-east-1
+
+  
+cd ~/registration-app/terraform
+terraform output app_url
+
+Connect to EC2
+hssh -i ~/.ssh/jenkins.pem ec2-user@ec2-ip
+
+Check containers are running
+sudo docker ps
+
+Check container logs for errors
+sudo docker logs registration-app-backend --tail 50
+sudo docker logs registration-app-frontend --tail 50
+
+Check database connection
+sudo docker exec registration-app-backend python -c "from database import engine; print('DB connected:', engine.url)"
+
+Check memory usage
+free -h
+
+Check Docker resource usage
+bashsudo docker stats --no-stream
+
+Check ECR login still valid
+sudo docker system info | grep Registry
